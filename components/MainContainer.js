@@ -1,7 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
-import { StyleSheet, Text, View } from 'react-native';
-import React from 'react';
+import { Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 
 const MainContainer = ({
   isHomeScreen = false,
@@ -11,13 +12,30 @@ const MainContainer = ({
   headerLeft = null,
   headerRight = null,
   title = '',
-  components = null,
+  headerFloatingView = null,
+  children,
 }) => {
+  const [index, setIndex] = useState(0);
+  const routes = headerFloatingView
+    ? headerFloatingView.map((tab, i) => ({
+      key: `tab-${i}`,
+      title: tab.tabName,
+    }))
+    : [];
+
+  const renderScene = headerFloatingView?.length
+    ? SceneMap(
+      headerFloatingView.reduce((acc, tab, i) => {
+        acc[`tab-${i}`] = tab.components;
+        return acc;
+      }, {})
+    )
+    : () => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>No tabs found</Text></View>;
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.mainContainer}>
         {showHeader &&
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomLeftRadius: headerFloatingView ? 0 : 8, borderBottomRightRadius: headerFloatingView ? 0 : 8 }]}>
             {showHeaderLeft &&
               <View style={[styles.headerLeft, { flex: isHomeScreen ? 0.5 : 0.15 }]}>
                 {isHomeScreen ? (
@@ -40,11 +58,27 @@ const MainContainer = ({
             }
           </View>
         }
+        {headerFloatingView && (
+          <TabView
+            style={styles.tabsViewStyle}
+            navigationState={{ index, routes }}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{ width: Dimensions.get('window').width }}
+            renderTabBar={props => (
+              <TabBar
+                {...props}
+                indicatorStyle={{ backgroundColor: 'white' }}
+                style={{ marginHorizontal: 16 }}
+              />
+            )}
+          />
+        )}
         <View style={styles.mainContent}>
-          {components}
+          <FlatList renderItem={() => children} nestedScrollEnabled data={['']} />
         </View>
       </View>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };
 
@@ -67,8 +101,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     height: 55,
     paddingHorizontal: 16,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -91,7 +123,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
+  tabsViewStyle: {
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    backgroundColor: '#333',
+    height: 40,
+
+  },
   mainContent: {
+    flex: 1,
     padding: 16,
     paddingBottom: 0,
   },

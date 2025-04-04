@@ -1,9 +1,7 @@
-// import StackNavigation from './components/StackNavigation';
-import LoginScreen from './screens/LoginScreen';
+import StackNavigation from './components/StackNavigation';
 
 const App = () => {
-  // return <StackNavigation />;
-  return <LoginScreen />;
+  return <StackNavigation />;
 };
 
 export default App;
